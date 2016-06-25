@@ -17,7 +17,7 @@ else {
 }
 var db ={};
 db.user=sequelize.import(__dirname+'/models/user.js');
-
+db.cust=sequelize.import(__dirname+'/models/customer.js');
 db.sequelize=sequelize;
 db.Sequelize=Sequelize;
 
