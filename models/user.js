@@ -60,7 +60,35 @@ module.exports = function (sequelize, DataTypes) {
                     }, function (error) {
                         reject();
                     });
-                })
+                });
+            },
+            changePassword: function (body) {
+                return new Promise(function (resolve, reject) {
+                    var attributes = {};
+                    if (typeof body.email !== 'string' || typeof  body.password !== 'string') {
+
+                        return reject();
+                    }
+                    var salt = bcrypt.genSaltSync(10);
+                    var hashedPassword = bcrypt.hashSync(body.password, salt);
+
+                    attributes.salt = salt;
+                    attributes.password_hash = hashedPassword;
+
+                    user.update(attributes, {
+                        where: {
+                            email: body.email
+                        }
+                    }).then(function (user) {
+                        if (!user) {
+                            return reject();
+                        } else {
+                            resolve(user);
+                        }
+                    }, function (error) {
+                        reject();
+                    });
+                });
             }
         },
         instanceMethods: {
