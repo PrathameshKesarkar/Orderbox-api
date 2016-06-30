@@ -1,3 +1,4 @@
 node_modules
 .idea
 data/dev-order-box-api.sqlite
+public/databases
