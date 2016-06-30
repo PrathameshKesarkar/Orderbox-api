@@ -14,6 +14,9 @@ module.exports = function (sequelize, DataTypes) {
             validate: {
                 isEmail: true
             }
+        }, db_backup_file: {
+            type: DataTypes.STRING,
+            allowNull: true
         },
         salt: {
             type: DataTypes.STRING
@@ -72,13 +75,13 @@ module.exports = function (sequelize, DataTypes) {
                         var tokenData = JSON.parse(bytes.toString(cryptojs.enc.Utf8));
 
                         user.findById(tokenData.id).then(function (user) {
-                            if(user){
+                            if (user) {
                                 resolve(user);
                             }
-                            else{
+                            else {
                                 reject();
                             }
-                        },function (error) {
+                        }, function (error) {
                             reject();
                         })
                     } catch (error) {

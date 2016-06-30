@@ -7,12 +7,13 @@ var _ = require('underscore');
 var db = require('./db');
 var bcrypt = require('bcryptjs');
 var middleware = require('./middleware.js')(db);
-var mkdirp = require('mkdirp');
 var app = express();
 var PORT = process.env.PORT || 3000;
 var multer = require('multer');
 var fs = require('fs');
 var basePath = './public/databases';
+
+var db_file_name;
 var storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, './public/databases');
@@ -27,7 +28,8 @@ var storage = multer.diskStorage({
             return fileExt.pop();
         };
 
-        cb(null, Date.now() + '.' + getFileExt(file.originalname));
+        db_file_name = Date.now()+ '.' + getFileExt(file.originalname);
+        cb(null, db_file_name );
     }
 });
 
@@ -42,15 +44,6 @@ app.post('/users', function (req, res) {
     var body = _.pick(req.body, 'email', 'password');
 
     db.user.create(body).then(function (user) {
-        var dir = basePath + '/' + user.id.toString();
-        mkdirp(dir, function (error) {
-            if (error) {
-                console.error(error);
-            }
-            else {
-                console.log('pow');
-            }
-        });
         res.json(user.toPublicJSON());
     }, function (error) {
         res.status(400).json(error);
@@ -73,13 +66,24 @@ app.post('/users/login', function (req, res) {
 });
 
 
-app.post('/database', middleware.requireAuthentication , multer({storage: storage}).single('upl'), function (req, res) {
+app.post('/database', middleware.requireAuthentication, multer({storage: storage}).single('upl'), function (req, res) {
     console.log(req.file);
+    var attributes = {};
+    var where={
+      id:req.user.get('id')
+    };
+
+    attributes.db_backup_file = db_file_name.toString();
+    req.user.update(attributes,where).then(function (user) {
+        console.log(user.toJSON());
+    },function (error) {
+        console.log(error);
+    });
     res.status(204).send();
 });
 
 app.get('/database', middleware.requireAuthentication, function (req, res) {
-    var file = fs.readFileSync('./public/databases/1467287165514.png');
+    var file = fs.readFileSync('./public/databases/'+req.user.get('db_backup_file'));
     res.writeHead(200, {'Content-Type': 'image/png'});
     res.end(file);
 });
