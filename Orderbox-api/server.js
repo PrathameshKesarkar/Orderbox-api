@@ -6,7 +6,7 @@ var bodyParser = require('body-parser');
 var _ = require('underscore');
 var db = require('./db');
 var bcrypt = require('bcryptjs');
-var middleware = require('./middleware');
+var middleware = require('./middleware.js')(db);
 var mkdirp = require('mkdirp');
 var app = express();
 var PORT = process.env.PORT || 3000;
@@ -15,19 +15,19 @@ var fs = require('fs');
 var basePath = './public/databases';
 var storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null,'./public/databases');
+        cb(null, './public/databases');
     },
     filename: function (req, file, cb) {
 
         var getFileExt = function (filename) {
-            var fileExt= filename.split('.');
-            if(fileExt.length===1||fileExt[0]===''){
-                return"";
+            var fileExt = filename.split('.');
+            if (fileExt.length === 1 || fileExt[0] === '') {
+                return "";
             }
             return fileExt.pop();
         };
 
-        cb(null,Date.now()+'.'+getFileExt(file.originalname));
+        cb(null, Date.now() + '.' + getFileExt(file.originalname));
     }
 });
 
@@ -58,7 +58,6 @@ app.post('/users', function (req, res) {
 });
 
 
-
 app.post('/users/login', function (req, res) {
     var body = _.pick(req.body, 'email', 'password');
 
@@ -71,19 +70,17 @@ app.post('/users/login', function (req, res) {
     }, function (error) {
         res.status(401).send('Password or email maybe wrong');
     });
-
 });
 
 
-app.post('/database', multer({storage:storage}).single('upl'), function (req, res) {
+app.post('/database', middleware.requireAuthentication , multer({storage: storage}).single('upl'), function (req, res) {
     console.log(req.file);
     res.status(204).send();
 });
 
-app.get('/database',function (req, res) {
-    //res.send(path.join(__dirname,'/public/database','1467287165514.png'));
+app.get('/database', middleware.requireAuthentication, function (req, res) {
     var file = fs.readFileSync('./public/databases/1467287165514.png');
-    res.writeHead(200,{'Content-Type':'image/png'});
+    res.writeHead(200, {'Content-Type': 'image/png'});
     res.end(file);
 });
 
@@ -92,4 +89,3 @@ db.sequelize.sync({force: true}).then(function () {
         console.log("Express is listening on Port " + PORT + "!");
     });
 });
-
